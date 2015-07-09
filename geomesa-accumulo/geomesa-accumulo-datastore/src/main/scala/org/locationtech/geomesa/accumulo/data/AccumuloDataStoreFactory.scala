@@ -22,6 +22,7 @@ import org.geotools.data.DataStoreFactorySpi
 import org.locationtech.geomesa.accumulo.stats.StatWriter
 import org.locationtech.geomesa.features.SerializationType
 import org.locationtech.geomesa.security
+import org.slf4j.{LoggerFactory, Logger}
 
 import scala.collection.JavaConversions._
 
@@ -29,7 +30,8 @@ class AccumuloDataStoreFactory extends DataStoreFactorySpi {
 
   import org.locationtech.geomesa.accumulo.data.AccumuloDataStoreFactory._
   import org.locationtech.geomesa.accumulo.data.AccumuloDataStoreFactory.params._
-
+ 
+  
   // this is a pass-through required of the ancestor interface
   def createNewDataStore(params: JMap[String, Serializable]) = createDataStore(params)
 
@@ -171,7 +173,15 @@ object AccumuloDataStoreFactory {
     val password = passwordParam.lookUp(params).asInstanceOf[String]
 
     val authToken = new PasswordToken(password.getBytes)
-    if(useMock) {
+    
+   //debug stuff
+   def logger: Logger = LoggerFactory.getLogger("AccumuloDataStoreFactory")
+    logger.info("Zookeepers:" + zookeepers)
+    logger.info("Instance: " + instance)
+    logger.info("User: "+user)
+    logger.info("Password: "+password)
+    
+    if(useMock || zookeepers.endsWith("/")) {
       (new MockInstance(instance).getConnector(user, authToken), authToken)
     } else {
       (new ZooKeeperInstance(instance, zookeepers).getConnector(user, authToken), authToken)

@@ -18,11 +18,19 @@ import org.apache.hadoop.io.Text
 import org.locationtech.geomesa.accumulo.index.ExplainerOutputType
 
 class ExplainingBatchScanner(output: ExplainerOutputType) extends ExplainingScanner(output) with BatchScanner {
+ 
+  
   override def setRanges(ranges: util.Collection[Range]): Unit = {}
+  override def getReadaheadThreshold(): Long = { return this.readAheadThreashold }
+  override def setReadaheadThreshold(readAhead: Long) = { this.readAheadThreashold = readAhead }
 }
 
 class ExplainingScanner(output: ExplainerOutputType) extends Scanner {
-
+ 
+  var readAheadThreashold: Long = 0
+  override def getReadaheadThreshold(): Long = { return this.readAheadThreashold }
+  override def setReadaheadThreshold(readAhead: Long) = { this.readAheadThreashold = readAhead }
+  
   override def setTimeout(timeout: Long, timeUnit: TimeUnit): Unit = output(s"setTimeout($timeout, $timeUnit)")
 
   override def close(): Unit = {}
