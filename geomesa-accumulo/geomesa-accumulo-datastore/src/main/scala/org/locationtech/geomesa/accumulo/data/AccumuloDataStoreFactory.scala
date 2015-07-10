@@ -175,17 +175,29 @@ object AccumuloDataStoreFactory {
     val authToken = new PasswordToken(password.getBytes)
     
    //debug stuff
-   def logger: Logger = LoggerFactory.getLogger("AccumuloDataStoreFactory")
-    logger.info("Zookeepers:" + zookeepers)
-    logger.info("Instance: " + instance)
-    logger.info("User: "+user)
-    logger.info("Password: "+password)
+//   def logger: Logger = LoggerFactory.getLogger("AccumuloDataStoreFactory")
+//    logger.info("Zookeepers:" + zookeepers)
+//    logger.info("Instance: " + instance)
+//    logger.info("User: "+user)
+//    logger.info("Password: "+password)
     
-    if(useMock || zookeepers.endsWith("/")) {
-      (new MockInstance(instance).getConnector(user, authToken), authToken)
-    } else {
-      (new ZooKeeperInstance(instance, zookeepers).getConnector(user, authToken), authToken)
-    }
+   
+      if(useMock) 
+      {
+       (new MockInstance(instance).getConnector(user, authToken), authToken)
+      }
+      else 
+      {
+        var zkInstance= try{
+               new ZooKeeperInstance(instance, zookeepers).getConnector(user, authToken)            
+           }
+        catch{
+              case e :Exception => new MockInstance(instance).getConnector(user, authToken)
+             //(new MockInstance(instance).getConnector(user, authToken), authToken)
+            }
+        (zkInstance, authToken)    
+      }
+    
   }
 
   /**
