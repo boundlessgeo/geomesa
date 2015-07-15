@@ -43,7 +43,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.version>2.10.5</scala.version>
         <geoserver.version>2.7-SNAPSHOT</geoserver.version>
-        <gt.version>11.2</gt.version>
+        <gt.version>13-SNAPSHOT</gt.version>
         <jts.version>1.13</jts.version>
         <jackson.codehaus.version>1.9.3</jackson.codehaus.version>
         <junit.version>4.5</junit.version>
@@ -97,6 +97,17 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <!-- only what's needed for the geoserver extension -->
+            <id>geoserver-ext</id>       
+            <modules>
+                <module>geomesa-plugin</module>
+                <module>geomesa-utils</module>
+                <module>geomesa-raster</module>
+                <module>geomesa-accumulo</module>       
+                <module>GeoServerExtensionPackaging</module>                
+            </modules>                    
         </profile>
     </profiles>
   
