@@ -12,7 +12,8 @@ import java.io.{File, FileInputStream, FileOutputStream}
 import java.util.Properties
 
 import com.typesafe.scalalogging.slf4j.Logging
-import org.vfny.geoserver.global.GeoserverDataDirectory
+//import org.vfny.geoserver.global.GeoserverDataDirectory
+import org.geoserver.config.{GeoServerDataDirectory}
 
 /**
  * Simple persistence strategy that keeps values in memory and writes them to a prop file in the
@@ -24,7 +25,10 @@ object PersistenceUtil extends Logging {
 
   // this method searches the classpath as well as the data directory, so don't use a package name
   // like 'geomesa'
-  private val geoMesaConfigDir = GeoserverDataDirectory.findCreateConfigDir("geomesa-config")
+  
+  
+  var dd = new GeoServerDataDirectory(new File("."))
+  private val geoMesaConfigDir = dd.findOrCreateDir("geomesa-config")
 
   private val configFile = new File(geoMesaConfigDir, "geomesa-config.properties")
 

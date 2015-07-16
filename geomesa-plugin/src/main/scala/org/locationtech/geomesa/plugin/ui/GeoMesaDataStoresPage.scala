@@ -9,6 +9,9 @@
 package org.locationtech.geomesa.plugin.ui
 
 import org.apache.accumulo.core.Constants
+import org.apache.accumulo.core.metadata.MetadataTable
+import org.apache.accumulo.core.metadata.schema.MetadataSchema
+import org.apache.accumulo.core.security.Authorizations
 import org.apache.accumulo.core.client.{Connector, IsolatedScanner}
 import org.apache.accumulo.core.data.KeyExtent
 import org.apache.hadoop.io.Text
@@ -57,17 +60,24 @@ class GeoMesaDataStoresPage extends GeoMesaBasePage {
     connection <- connections
     params = getDataStoreParams(connection)
   } {
+    
+   
     val name = connection.name
-    val dataStore = DataStoreFinder.getDataStore(params.asJava).asInstanceOf[AccumuloDataStore]
-    dataStoreNames.append(name)
+    val dataStore =  try{ DataStoreFinder.getDataStore(params.asJava).asInstanceOf[AccumuloDataStore] }
+                      catch {
+                        case e: Exception => null
+                      }
+   if(dataStore != null)
+   {                      
+      dataStoreNames.append(name)
 
-    val featureNames = dataStore.getTypeNames.filter(fn => Try(dataStore.getSchema(fn)).isSuccess).toList
-    features.put(name, featureNames)
+      val featureNames = dataStore.getTypeNames.filter(fn => Try(dataStore.getSchema(fn)).isSuccess).toList
+      features.put(name, featureNames)
 
-    val metadataPerFeature = featureNames.map { typeName =>
-      typeName -> getFeatureMetadata(dataStore, typeName, dataStore.catalogTable)
-    }.toMap[String, List[TableMetadata]]
-    metadata.put(name, metadataPerFeature)
+      val metadataPerFeature = featureNames.map { typeName =>
+        typeName -> getFeatureMetadata(dataStore, typeName, dataStore.catalogTable)
+      }.toMap[String, List[TableMetadata]]
+      metadata.put(name, metadataPerFeature)
 
     val boundsPerFeature = featureNames.map { typeName =>
       val bounds = dataStore.getBounds(new Query(typeName))
@@ -76,6 +86,8 @@ class GeoMesaDataStoresPage extends GeoMesaBasePage {
     bounds.put(name, boundsPerFeature)
 
     connectionParams.put(name, params)
+   }
+    
   }
 
   add(new ListView[String]("storeDetails", dataStoreNames.toList.asJava) {
@@ -215,8 +227,9 @@ object GeoMesaDataStoresPage {
   def getTableMetadata(connector: Connector, featureName: String, tableName: String, tableId: String, displayName: String): TableMetadata = {
     // TODO move this to core utility class where it can be re-used
 
-    val scanner = new IsolatedScanner(connector.createScanner(Constants.METADATA_TABLE_NAME, Constants.NO_AUTHS))
-    scanner.fetchColumnFamily(Constants.METADATA_DATAFILE_COLUMN_FAMILY)
+    
+    val scanner = new IsolatedScanner(connector.createScanner(MetadataTable.NAME, Authorizations.EMPTY))
+    scanner.fetchColumnFamily(MetadataSchema.TabletsSection.DataFileColumnFamily.NAME)
     scanner.setRange(new KeyExtent(new Text(tableId), null, null).toMetadataRange())
 
     var fileSize:Long = 0
@@ -229,8 +242,8 @@ object GeoMesaDataStoresPage {
     scanner.asScala.foreach {
       case entry =>
         //  example cq: /t-0005bta/F0005bum.rf
-        val cq = entry.getKey.getColumnQualifier.toString
-        val tablet = cq.split("/")(1)
+               
+        val tablet = entry.getKey.getColumnQualifier.toString
         if (lastTablet != tablet) {
           numTablets = numTablets + 1
           lastTablet = tablet
