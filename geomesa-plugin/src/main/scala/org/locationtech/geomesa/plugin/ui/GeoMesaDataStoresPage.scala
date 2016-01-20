@@ -158,7 +158,7 @@ class GeoMesaDataStoresPage extends GeoMesaBasePage {
          instanceIdParam.key  -> connectionInfo.instanceId,
          userParam.key        -> connectionInfo.user,
          passwordParam.key    -> connectionInfo.password,
-         tableNameParam.key   -> connectionInfo.table
+         tableNameParam.key   -> Option(connectionInfo.table).filterNot(_.isEmpty).getOrElse("EMPTY")
        )
 
 }
